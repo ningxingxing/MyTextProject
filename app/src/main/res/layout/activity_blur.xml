@@ -1,33 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
+    android:orientation="vertical"
     android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/raw_image"
+
+    <SeekBar
+        android:id="@+id/seekBar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop" />
+        android:max="100"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:layout_height="50dp"/>
 
-    <com.example.mytestproject.blur.CutLayout
-        android:id="@+id/cut_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/blurred_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleType="fitStart" />
 
-        <com.example.mytestproject.MyImageView
-            android:id="@+id/blurred_image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+<!--    <com.example.mytestproject.blur.CutLayout-->
+<!--        android:id="@+id/cut_layout"-->
+<!--        android:visibility="gone"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent">-->
+<!--        -->
+<!--        <ImageView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:src="@drawable/halo_black"-->
+<!--            android:scaleType="fitXY"-->
+<!--            android:visibility="gone"-->
+<!--            android:layout_height="match_parent"/>-->
 
-            android:scaleType="centerCrop" />
+<!--    </com.example.mytestproject.blur.CutLayout>-->
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:src="@drawable/halo_black"
-            android:scaleType="fitXY"
-            android:visibility="gone"
-            android:layout_height="match_parent"/>
-
-    </com.example.mytestproject.blur.CutLayout>
-
-</RelativeLayout>
+</LinearLayout>

@@ -11,11 +11,14 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Shader;
 import android.graphics.Xfermode;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.widget.RelativeLayout;
+
+import com.example.mytestproject.R;
 
 import static android.graphics.Paint.Style.FILL;
 import static android.graphics.Paint.Style.STROKE;
@@ -42,6 +45,8 @@ public class CutLayout extends RelativeLayout {
     private boolean isScale = false;
     private Paint mBlurPaint;
     private int mCircleSize = 50;
+    private Drawable mDrawable;
+    private boolean isMoving = false;
 
     private ICutLayoutListener iCutLayoutListener;
 
@@ -77,92 +82,101 @@ public class CutLayout extends RelativeLayout {
         mBlurPaint.setStrokeWidth(mCircleSize);
         mBlurPaint.setColor(Color.WHITE);
         mBlurPaint.setAlpha(20);
+
+        mDrawable = context.getResources().getDrawable(R.mipmap.blur);
     }
 
 
-    @Override
-    protected void dispatchDraw(Canvas canvas) {
-        int saveCount = canvas.saveLayer(0, 0, getWidth(), getHeight(), null, Canvas.ALL_SAVE_FLAG);
-        super.dispatchDraw(canvas);
-        if (!isScale) {
-            paint.setXfermode(pdMode);
-            path.reset();
-            path.addCircle(mMoveX, mMoveY, mScale * getWidth() / 4, Path.Direction.CW);
-            Log.e("nsc", "dispatchDraw mMoveX=" + mMoveX + " mMoveY=" + mMoveY);
-            canvas.drawPath(path, paint);
-            canvas.restoreToCount(saveCount);
-            paint.setXfermode(null);
-        }
-        if (isShow) {
-            canvas.drawCircle(mMoveX, mMoveY, mScale * getWidth() / 4 - mCircleSize / 2, mCirclePaint);
-        }
-        canvas.drawCircle(mMoveX, mMoveY, mScale * getWidth() / 4 - mCircleSize / 2, mBlurPaint);
-    }
+  //  @Override
+   // protected void dispatchDraw(Canvas canvas) {
+    //    int saveCount = canvas.saveLayer(0, 0, getWidth(), getHeight(), null, Canvas.ALL_SAVE_FLAG);
+    //    super.dispatchDraw(canvas);
+       // if (isMoving) {
+//            if (!isScale) {
+//                paint.setXfermode(pdMode);
+//                path.reset();
+//                path.addCircle(mMoveX, mMoveY, mScale * getWidth() / 4, Path.Direction.CW);
+//                Log.e("nsc", "dispatchDraw mMoveX=" + mMoveX + " mMoveY=" + mMoveY);
+//                canvas.drawPath(path, paint);
+//                canvas.restoreToCount(saveCount);
+//                paint.setXfermode(null);
+//            }
+//            if (isShow) {
+//                canvas.drawCircle(mMoveX, mMoveY, mScale * getWidth() / 4 - mCircleSize / 2, mCirclePaint);
+//            }
+       // }
+        //    canvas.drawCircle(mMoveX, mMoveY, mScale * getWidth() / 4 - mCircleSize / 2, mBlurPaint);
+//        mDrawable.setBounds(0, 0, (int) mScale * getWidth(), (int) mScale * getWidth());
+//        mDrawable.draw(canvas);
+ //   }
 
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        Log.e("nsc", "dispatchDraw mMoveX=" + mMoveX + " mMoveY=" + mMoveY + " event=" + event.getAction());
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                mDownX = event.getX();
-                mDownY = event.getY();
-                mMoveX = event.getX();
-                mMoveY = event.getY();
-//                if (iCutLayoutListener!=null){
-//                    iCutLayoutListener.onMove(mMoveX,mMoveY);
+  //  @Override
+  //  public boolean onTouchEvent(MotionEvent event) {
+   //     Log.e("nsc", "dispatchDraw mMoveX=" + mMoveX + " mMoveY=" + mMoveY + " event=" + event.getAction());
+//        switch (event.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//                mDownX = event.getX();
+//                mDownY = event.getY();
+//                mMoveX = event.getX();
+//                mMoveY = event.getY();
+//                isMoving = false;
+//                isShow = true;
+//                invalidate();
+//                break;
+//
+//            case MotionEvent.ACTION_POINTER_DOWN:
+//                mOldDistance = distance(event);
+//                break;
+//
+//            case MotionEvent.ACTION_MOVE:
+//                mMoveX = event.getX();
+//                mMoveY = event.getY();
+//                float diffX = event.getX() - mDownX;
+//                float diffY = event.getY() - mDownY;
+//                boolean isMove = Math.abs(diffX) > mTouchSlop || Math.abs(diffY) > mTouchSlop;
+//                if (event.getPointerCount() == 2 && isMove) {
+//                    isScale = true;
+//                    float newDist = distance(event);
+//                    float space = (newDist - mOldDistance);
+//                    float scale = getScaleX() + space / getWidth();
+//                    float diffScale = scale - mLastScale;
+//                    mScale = mScale + diffScale;
+//                    //  mScale = mScale + space / getWidth()/3;
+//
+//                    mLastScale = scale;
+//                } else if (event.getPointerCount() == 1 && isMove) {
+//                    isMoving= true;
+////                    if (iCutLayoutListener!=null){
+////                        iCutLayoutListener.onMove(mMoveX,mMoveY);
+////                    }
+//                    isScale = false;
 //                }
-                isShow = true;
-                invalidate();
-                break;
-
-            case MotionEvent.ACTION_POINTER_DOWN:
-                mOldDistance = distance(event);
-                break;
-
-            case MotionEvent.ACTION_MOVE:
-                mMoveX = event.getX();
-                mMoveY = event.getY();
-                float diffX = event.getX() - mDownX;
-                float diffY = event.getY() - mDownY;
-                boolean isMove = Math.abs(diffX) > mTouchSlop || Math.abs(diffY) > mTouchSlop;
-                if (event.getPointerCount() == 2 && isMove) {
-                    isScale = true;
-                    float newDist = distance(event);
-                    float space = (newDist - mOldDistance);
-                    float scale = getScaleX() + space / getWidth();
-                    float diffScale = scale - mLastScale;
-                    mScale = mScale + diffScale;
-                    //  mScale = mScale + space / getWidth()/3;
-
-                    mLastScale = scale;
-                } else if (event.getPointerCount() == 1 && isMove) {
-//                    if (iCutLayoutListener!=null){
-//                        iCutLayoutListener.onMove(mMoveX,mMoveY);
-//                    }
-                    isScale = false;
-                }
-                invalidate();
-
-                break;
-            case MotionEvent.ACTION_UP:
-                mMoveX = event.getX();
-                mMoveY = event.getY();
-                isShow = false;
-                invalidate();
-                break;
-
-            case MotionEvent.ACTION_POINTER_UP:
-                float upX = event.getX() - mDownX;
-                float upY = event.getY() - mDownY;
-
-                if (Math.abs(upX) < 5 && Math.abs(upY) < 5) {
-                    mScale = 1.0f;
-                }
-                break;
-        }
-        return true;
-    }
+//                invalidate();
+//
+//                break;
+//            case MotionEvent.ACTION_UP:
+//                isMoving= false;
+//                mMoveX = event.getX();
+//                mMoveY = event.getY();
+//                isShow = false;
+//                if (iCutLayoutListener != null) {
+//                    iCutLayoutListener.onMove(mMoveX, mMoveY);
+//                }
+//                invalidate();
+//                break;
+//
+//            case MotionEvent.ACTION_POINTER_UP:
+//                float upX = event.getX() - mDownX;
+//                float upY = event.getY() - mDownY;
+//
+//                if (Math.abs(upX) < 5 && Math.abs(upY) < 5) {
+//                    mScale = 1.0f;
+//                }
+//                break;
+//        }
+     //   return false;
+  //  }
 
     private float distance(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);

@@ -5,55 +5,167 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.renderscript.Allocation;
+import androidx.renderscript.RenderScript;
+import androidx.renderscript.ScriptIntrinsicBlur;
 
 import com.example.mytestproject.blur.CutLayout;
-import com.example.mytestproject.blur.GaussianBlur;
 
 public class BlurActivity extends Activity {
     private ImageView ivRawImage;
-    private MyImageView ivBlurredImage;
+    private AppCompatImageView ivBlurredImage;
     private CutLayout mCutLayout;
+    private int radius = 10;
+    private SeekBar mSeekBar;
+    private Bitmap mBitmap;
+    private Bitmap mOutputBitmap;
+    private RenderScript mRenderScript;
+    private ScriptIntrinsicBlur blurScript;
+    private ScriptC_blur sketchScript;
+    private float mProgress = 0;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_blur);
 
-        ivRawImage = (ImageView) findViewById(R.id.raw_image);
-        ivBlurredImage = (MyImageView) findViewById(R.id.blurred_image);
-        mCutLayout = (CutLayout) findViewById(R.id.cut_layout);
-        ivRawImage.setImageResource(R.mipmap.meiguo);
-
+      //  ivRawImage = (ImageView) findViewById(R.id.raw_image);
+        ivBlurredImage = (AppCompatImageView) findViewById(R.id.blurred_image);
+      //  mCutLayout = (CutLayout) findViewById(R.id.cut_layout);
+        // ivRawImage.setImageResource(R.mipmap.hua);
+        mSeekBar = findViewById(R.id.seekBar);
 
 //        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.meiguo);
 //        ivBlurredImage.setImageBitmap(fastBlur(this, bitmap, 5));
 
-        GaussianBlur.with(BlurActivity.this)
-                .size(300)
-                .radius(1)
-                .setViewWidth(mCutLayout.getWidth())
-                .setViewHeight(mCutLayout.getHeight())
-                .put(R.mipmap.meiguo, ivBlurredImage, (int) 0, (int) 0, 60);
+//        GaussianBlur.with(BlurActivity.this)
+//                .size(300)
+//                .radius(1)
+//                .setViewWidth(mCutLayout.getWidth())
+//                .setViewHeight(mCutLayout.getHeight())
+//                .put(R.mipmap.hua, ivBlurredImage, (int) 1, (int) 1, radius);
 
-        mCutLayout.setCutLayoutListener(new CutLayout.ICutLayoutListener() {
-            @Override
-            public void onMove(float x, float y) {
+//        mCutLayout.setCutLayoutListener(new CutLayout.ICutLayoutListener() {
+//            @Override
+//            public void onMove(float x, float y) {
+//                radius ++;
 //                GaussianBlur.with(BlurActivity.this)
-//                        .size(300)
+//                        .size(600)
 //                        .radius(1)
 //                        .setViewWidth(mCutLayout.getWidth())
 //                        .setViewHeight(mCutLayout.getHeight())
-//                        .put(R.mipmap.meiguo, ivBlurredImage,(int)x,(int)y,60);
+//                        .put(R.mipmap.hua, ivBlurredImage,(int)x,(int)y,radius);
+//            }
+//        });
+
+        mBitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.hua);
+        mRenderScript = RenderScript.create(BlurActivity.this);
+        sketchScript = new ScriptC_blur(mRenderScript);
+        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mOutputBitmap = Bitmap.createBitmap(mBitmap.getWidth(), mBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+
+                Allocation in = Allocation.createFromBitmap(mRenderScript,mBitmap);
+                Allocation out = Allocation.createTyped(mRenderScript,in.getType());
+                sketchScript.set_gWidth(mBitmap.getWidth());
+                sketchScript.set_gHeight(mBitmap.getHeight());
+                sketchScript.set_gIn(in);
+                sketchScript.set_clickX(mBitmap.getWidth()/2);
+                sketchScript.set_clickY(mBitmap.getHeight()/2);
+                Log.e("nsc","onProgressChanged ="+progress*1f/10);
+                mProgress = progress/10f;
+                sketchScript.set_radius(mProgress);
+                sketchScript.forEach_invert(in,out);
+
+                out.copyTo(mOutputBitmap);
+                ivBlurredImage.setImageBitmap(mOutputBitmap);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                if (mRenderScript==null) {
+                    mRenderScript = RenderScript.create(BlurActivity.this);
+                }
+                if (sketchScript==null) {
+                    sketchScript = new ScriptC_blur(mRenderScript);
+                }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                ivBlurredImage.setImageBitmap(mOutputBitmap);
+                if (mRenderScript!=null){
+                    mRenderScript.destroy();
+                    mRenderScript = null;
+                }
+                if (sketchScript!=null) {
+                    sketchScript.destroy();
+                    sketchScript = null;
+                }
+
             }
         });
+
+
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()){
+
+            case MotionEvent.ACTION_DOWN:
+                mOutputBitmap = Bitmap.createBitmap(mBitmap.getWidth(), mBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+
+                if (mRenderScript==null) {
+                    mRenderScript = RenderScript.create(BlurActivity.this);
+                }
+                if (sketchScript==null) {
+                    sketchScript = new ScriptC_blur(mRenderScript);
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+
+                Allocation in = Allocation.createFromBitmap(mRenderScript,mBitmap);
+                Allocation out = Allocation.createTyped(mRenderScript,in.getType());
+                sketchScript.set_gWidth(mBitmap.getWidth());
+                sketchScript.set_gHeight(mBitmap.getHeight());
+                sketchScript.set_gIn(in);
+                sketchScript.set_clickX(event.getX());
+                sketchScript.set_clickY(event.getY());
+                Log.e("nsc"," onProgressChanged x="+event.getX() + " y="+event.getY()
+                        + " =="+mBitmap.getWidth() + " ="+ mBitmap.getHeight());
+                sketchScript.set_radius(mProgress);
+                sketchScript.forEach_invert(in,out);
+
+                out.copyTo(mOutputBitmap);
+                ivBlurredImage.setImageBitmap(mOutputBitmap);
+
+                break;
+
+            case MotionEvent.ACTION_UP:
+                if (mRenderScript!=null){
+                    mRenderScript.destroy();
+                    mRenderScript = null;
+                }
+                if (sketchScript!=null) {
+                    sketchScript.destroy();
+                    sketchScript = null;
+                }
+
+                break;
+
+        }
+        return super.onTouchEvent(event);
+    }
 
     public Bitmap fastBlur(Context context, Bitmap sentBitmap, int radius) {
         long time = System.currentTimeMillis();

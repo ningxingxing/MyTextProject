@@ -23,16 +23,4 @@ public class MyImageView extends AppCompatImageView {
         super(context, attrs, defStyleAttr);
     }
 
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent event) {
-        Log.e("nsc","dispatchDraw 1="+event.getAction());
-        return super.onTouchEvent(event);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        Log.e("nsc","dispatchDraw2 ="+event.getAction());
-        return super.onTouchEvent(event);
-    }
 }
